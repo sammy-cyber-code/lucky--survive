@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>超級抽鑰匙生死鬥！</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f8fafc;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background-color: #1e293b;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            text-align: center;
+            max-width: 500px;
+            width: 100%;
+            border: 1px solid #334155;
+        }
+        h1 {
+            color: #f43f5e;
+            margin-bottom: 10px;
+            font-size: 28px;
+            text-shadow: 0 0 10px rgba(244, 63, 94, 0.3);
+        }
+        button {
+            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+            color: white;
+            border: none;
+            padding: 14px 32px;
+            font-size: 20px;
+            font-weight: bold;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 15px rgba(225, 29, 72, 0.4);
+            margin-top: 10px;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(225, 29, 72, 0.6);
+        }
+        button:disabled {
+            background: #475569;
+            color: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        #result-box {
+            margin-top: 25px;
+            text-align: left;
+            min-height: 200px;
+        }
+        .pair-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 12px;
+            margin: 10px 0;
+            background-color: #334155;
+            border-radius: 8px;
+            border-left: 5px solid #64748b;
+            font-size: 19px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .pair-row.flashing {
+            border-left-color: #38bdf8;
+            background-color: #1e293b;
+            box-shadow: inset 0 0 10px rgba(56, 189, 248, 0.2);
+        }
+        .pair-row.revealed {
+            border-left-color: #4ade80;
+            background-color: #0f172a;
+            animation: popIn 0.3s ease-out;
+        }
+        .driver { color: #38bdf8; font-weight: bold; width: 80px; text-align: center; }
+        .passenger { color: #f43f5e; font-weight: bold; width: 80px; text-align: center; }
+        .passenger.unknown { color: #64748b; font-weight: normal; }
+        .arrow { color: #94a3b8; font-size: 16px; }
+
+        @keyframes popIn {
+            0% { transform: scale(0.98); }
+            50% { transform: scale(1.03); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔥 超級抽鑰匙生死鬥 ☠️</h1>
+    <p style="color: #94a3b8; margin-bottom: 20px;">戰場已就位！誰能逃過載人的命運？</p>
+    <button id="draw-btn" onclick="startDraw()">揭曉油門與後座！</button>
+    
+    <div id="result-box">
+        <!-- 騎士名單一開始會直接渲染在這裡 -->
+    </div>
+</div>
+
+<script>
+    // 1. 固定不可拆散的王牌組合
+    const fixedPairs = [
+        { driver: "姿穎", passenger: "健倫" },
+        { driver: "品君", passenger: "麒如" }
+    ];
+
+    // 2. 要參與真正隨機抽籤的人員名單
+    const randomDrivers = ["詠緹", "昀家", "家彥", "鳳捷"];
+    const randomPassengers = ["苡恩", "壹仰", "大維", "孟潔"];
+
+    // 用於畫面上閃爍效果的完整被載組名單
+    const allPassengers = ["健倫", "麒如", "苡恩", "壹仰", "大維", "孟潔"];
+
+    let finalResults = [];
+
+    // Fisher-Yates 洗牌演算法（用來徹底打亂陣列）
+    function shuffle(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // 初始化頁面
+    function initGame() {
+        const box = document.getElementById('result-box');
+        box.innerHTML = '';
+        finalResults = [];
+
+        // 複製一份隨機名單並打亂
+        let shuffledDrivers = shuffle([...randomDrivers]);
+        let shuffledPassengers = shuffle([...randomPassengers]);
+
+        // 將隨機配對的結果組合起來
+        let generatedPairs = [];
+        for (let i = 0; i < shuffledDrivers.length; i++) {
+            generatedPairs.push({
+                driver: shuffledDrivers[i],
+                passenger: shuffledPassengers[i]
+            });
+        }
+
+        // 把「固定組」和「隨機組」合體，並將這 6 組的「出場排序」徹底打亂
+        finalResults = shuffle([...fixedPairs, ...generatedPairs]);
+
+        // 渲染所有騎士，後座維持 ？？？
+        finalResults.forEach((pair, index) => {
+            const row = document.createElement('div');
+            row.className = 'pair-row';
+            row.id = `pair-${index}`;
+            row.innerHTML = `
+                <span class="driver">${pair.driver}</span> 
+                <span class="arrow">🛵 載 ➔</span> 
+                <span class="passenger unknown">？ ？ ？</span>
+            `;
+            box.appendChild(row);
+        });
+    }
+
+    // 開始依序揭曉
+    async function startDraw() {
+        const btn = document.getElementById('draw-btn');
+        btn.disabled = true;
+
+        for (let i = 0; i < finalResults.length; i++) {
+            const currentPair = finalResults[i];
+            const row = document.getElementById(`pair-${i}`);
+            const passengerSpan = row.querySelector('.passenger');
+            
+            row.className = 'pair-row flashing';
+            passengerSpan.classList.remove('unknown');
+
+            // 隨機閃爍特效
+            for (let j = 0; j < 15; j++) {
+                const randomPassenger = allPassengers[Math.floor(Math.random() * allPassengers.length)];
+                passengerSpan.innerText = randomPassenger;
+                await sleep(50);
+            }
+
+            // 鎖定結果（固定組會是設定好的，隨機組是剛剛真正隨機配對的）
+            row.className = 'pair-row revealed';
+            passengerSpan.innerText = currentPair.passenger;
+            
+            await sleep(800);
+        }
+
+        btn.disabled = false;
+        btn.innerText = '生死重開局';
+        btn.onclick = () => {
+            initGame();
+            btn.innerText = '揭曉油門與後座！';
+            btn.onclick = startDraw;
+        };
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    window.onload = initGame;
+</script>
+
+</body>
+</html>
